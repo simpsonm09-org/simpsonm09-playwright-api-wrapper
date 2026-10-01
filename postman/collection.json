@@ -1,0 +1,125 @@
+{
+  "info": {
+    "name": "Playwright Wrapper API",
+    "description": "Runs a browser scenario through the wrapper and asserts the result. Uses ${...} for run-level variables so it does not collide with Postman's own {{...}} syntax.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "targetUrl", "value": "http://127.0.0.1:4010/checkout" },
+    { "key": "formUrl", "value": "http://127.0.0.1:4010/form" },
+    { "key": "apiKey", "value": "dev-local-key" }
+  ],
+  "item": [
+    {
+      "name": "Run checkout scenario",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"url\":\"{{targetUrl}}\",\"vars\":{\"email\":\"qa@example.test\",\"card\":\"4242424242424242\"},\"steps\":[{\"action\":\"fill\",\"target\":{\"by\":\"label\",\"text\":\"Email\"},\"value\":\"${email}\"},{\"action\":\"fill\",\"target\":{\"by\":\"label\",\"text\":\"Card number\"},\"value\":\"${card}\"},{\"action\":\"click\",\"target\":{\"by\":\"role\",\"role\":\"button\",\"name\":\"Place order\"}},{\"action\":\"assertText\",\"target\":{\"by\":\"text\",\"text\":\"Order received\"},\"contains\":\"Order received\"},{\"action\":\"readText\",\"target\":{\"by\":\"testId\",\"value\":\"order-id\"},\"as\":\"orderId\"}]}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/runs",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "runs"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('run passed', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.status).to.eql('passed');",
+              "  pm.expect(body.outputs.orderId).to.match(/^ord_/);",
+              "  pm.collectionVariables.set('orderId', body.outputs.orderId);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Run checkout scenario (named flow)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"flow\":\"checkout\",\"url\":\"{{targetUrl}}\",\"vars\":{\"email\":\"qa@example.test\",\"card\":\"4242424242424242\"}}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/runs",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "runs"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('named flow passed', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.status).to.eql('passed');",
+              "  pm.expect(body.outputs.orderId).to.match(/^ord_/);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Submit the basic form (named flow)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{apiKey}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"flow\":\"basic-form\",\"url\":\"{{formUrl}}\",\"vars\":{\"name\":\"Ada Lovelace\",\"email\":\"ada@example.test\",\"plan\":\"pro\",\"notes\":\"filled by the wrapper\"}}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/v1/runs",
+          "host": ["{{baseUrl}}"],
+          "path": ["v1", "runs"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('basic form passed', function () {",
+              "  pm.response.to.have.status(200);",
+              "  const body = pm.response.json();",
+              "  pm.expect(body.status).to.eql('passed');",
+              "  pm.expect(body.outputs.submissionId).to.match(/^sub_/);",
+              "  pm.expect(body.outputs.nameValue).to.eql('Ada Lovelace');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

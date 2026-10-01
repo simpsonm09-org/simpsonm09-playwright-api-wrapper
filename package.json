@@ -1,0 +1,39 @@
+{
+  "name": "playwright-api-wrapper",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lightweight HTTP API that runs one Playwright scenario per request.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/src/server.js",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "fixture": "tsx fixture/server.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration",
+    "test:e2e": "vitest run test/e2e",
+    "newman": "node scripts/newman.mjs",
+    "postman": "node scripts/postman-cli.mjs",
+    "compose:test": "docker compose --profile test up --build",
+    "verify": "npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "@fastify/type-provider-typebox": "^6.1.0",
+    "@sinclair/typebox": "^0.34.52",
+    "fastify": "^5.12.5",
+    "playwright": "1.63.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "newman": "^6.2.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}

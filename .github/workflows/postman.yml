@@ -1,0 +1,65 @@
+name: postman
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collection:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build image
+        run: docker build --target runtime -t pw-wrapper:ci .
+      - name: Start fixture and api
+        run: |
+          docker network create pw
+          docker run -d --name fixture --network pw \
+            -e FIXTURE_HOST=0.0.0.0 -e FIXTURE_PORT=4010 \
+            pw-wrapper:ci node dist/fixture/server.js
+          docker run -d --name api --network pw -p 3000:3000 \
+            -e NODE_ENV=production -e HOST=0.0.0.0 -e PORT=3000 \
+            -e API_KEY=ci-key -e ALLOWED_TARGETS=http://fixture:4010 \
+            -e CHROMIUM_ARGS=--no-sandbox \
+            pw-wrapper:ci
+      - name: Wait for readiness
+        run: |
+          for _ in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/readyz; then exit 0; fi
+            sleep 2
+          done
+          echo "api did not become ready"
+          docker logs api
+          exit 1
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run the collection with newman
+        run: npm run newman
+        env:
+          WRAPPER_URL: http://localhost:3000
+          TARGET_URL: http://fixture:4010/checkout
+          FORM_URL: http://fixture:4010/form
+          API_KEY: ci-key
+      - name: Run the collection with the Postman CLI
+        run: npm run postman
+        env:
+          WRAPPER_URL: http://localhost:3000
+          TARGET_URL: http://fixture:4010/checkout
+          FORM_URL: http://fixture:4010/form
+          API_KEY: ci-key
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs api

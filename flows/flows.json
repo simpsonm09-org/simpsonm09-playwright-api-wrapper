@@ -1,0 +1,86 @@
+{
+  "checkout": {
+    "steps": [
+      {
+        "action": "fill",
+        "target": { "by": "label", "text": "Email" },
+        "value": "${email}"
+      },
+      {
+        "action": "fill",
+        "target": { "by": "label", "text": "Card number" },
+        "value": "${card}"
+      },
+      {
+        "action": "click",
+        "target": { "by": "role", "role": "button", "name": "Place order" }
+      },
+      {
+        "action": "assertText",
+        "target": { "by": "text", "text": "Order received" },
+        "contains": "Order received"
+      },
+      {
+        "action": "readText",
+        "target": { "by": "testId", "value": "order-id" },
+        "as": "orderId"
+      }
+    ]
+  },
+  "basic-form": {
+    "steps": [
+      {
+        "action": "fill",
+        "target": { "by": "label", "text": "Full name" },
+        "value": "${name}"
+      },
+      {
+        "action": "fill",
+        "target": { "by": "label", "text": "Email" },
+        "value": "${email}"
+      },
+      {
+        "action": "selectOption",
+        "target": { "by": "label", "text": "Plan" },
+        "value": "${plan}"
+      },
+      {
+        "action": "check",
+        "target": { "by": "label", "text": "Subscribe to news" }
+      },
+      {
+        "action": "fill",
+        "target": { "by": "label", "text": "Notes" },
+        "value": "${notes}"
+      },
+      {
+        "action": "readInputValue",
+        "target": { "by": "testId", "value": "name" },
+        "as": "nameValue"
+      },
+      {
+        "action": "click",
+        "target": { "by": "role", "role": "button", "name": "Submit" }
+      },
+      {
+        "action": "assertVisible",
+        "target": { "by": "testId", "value": "submission-id" }
+      },
+      {
+        "action": "assertText",
+        "target": { "by": "testId", "value": "result-plan" },
+        "equals": "${plan}"
+      },
+      {
+        "action": "assertText",
+        "target": { "by": "testId", "value": "result-news" },
+        "equals": "yes"
+      },
+      {
+        "action": "readText",
+        "target": { "by": "testId", "value": "submission-id" },
+        "as": "submissionId"
+      }
+    ]
+  }
+}

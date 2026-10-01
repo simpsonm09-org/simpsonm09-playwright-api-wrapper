@@ -1,0 +1,130 @@
+name: publish
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.ref }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        name: Image metadata
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=Playwright Wrapper API
+      - id: image
+        name: Record the immutable tag
+        run: echo "ref=ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: runtime
+          platforms: linux/amd64,linux/arm64
+          push: true
+          # The default provenance attestation embeds the GitHub push event
+          # payload, and a public repository exposes this workflow log. That
+          # payload carries the repository owner's email. Commit authorship is
+          # already noreply, so dropping provenance keeps the image and log
+          # free of personal data.
+          provenance: false
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ steps.image.outputs.ref }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  newman:
+    needs: publish
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Start fixture and api
+        env:
+          IMAGE: ${{ needs.publish.outputs.image }}
+        run: |
+          docker network create pw
+          docker run -d --name fixture --network pw \
+            -e FIXTURE_HOST=0.0.0.0 -e FIXTURE_PORT=4010 \
+            "$IMAGE" node dist/fixture/server.js
+          docker run -d --name api --network pw -p 3000:3000 \
+            -e NODE_ENV=production -e HOST=0.0.0.0 -e PORT=3000 \
+            -e API_KEY=ci-key -e ALLOWED_TARGETS=http://fixture:4010 \
+            -e CHROMIUM_ARGS=--no-sandbox \
+            "$IMAGE"
+      - name: Wait for readiness
+        run: |
+          for _ in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/readyz; then exit 0; fi
+            sleep 2
+          done
+          echo "api did not become ready"
+          docker logs api
+          exit 1
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          # This workflow publishes the image. Keep the release path free of
+          # restored cache state so it cannot be poisoned.
+          package-manager-cache: false
+      - name: Install dependencies
+        run: npm ci
+      - name: Run the collection with newman
+        run: npm run newman
+        env:
+          WRAPPER_URL: http://localhost:3000
+          TARGET_URL: http://fixture:4010/checkout
+          FORM_URL: http://fixture:4010/form
+          API_KEY: ci-key
+      - name: Run the collection with the Postman CLI
+        run: npm run postman
+        env:
+          WRAPPER_URL: http://localhost:3000
+          TARGET_URL: http://fixture:4010/checkout
+          FORM_URL: http://fixture:4010/form
+          API_KEY: ci-key

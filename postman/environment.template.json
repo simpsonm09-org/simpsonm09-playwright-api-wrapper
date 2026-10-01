@@ -1,0 +1,10 @@
+{
+  "name": "playwright-wrapper (template)",
+  "values": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "enabled": true },
+    { "key": "targetUrl", "value": "http://127.0.0.1:4010/checkout", "enabled": true },
+    { "key": "formUrl", "value": "http://127.0.0.1:4010/form", "enabled": true },
+    { "key": "apiKey", "value": "replace-me", "enabled": true, "type": "secret" }
+  ],
+  "_postman_variable_scope": "environment"
+}

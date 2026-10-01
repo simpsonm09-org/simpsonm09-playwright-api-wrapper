@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.local
+postman/environment.local.json
+test-results/
+*.log
+.DS_Store
+
+# Local scan output
+*.sarif
+aislop.sarif
+trivy.sarif
+
+# Local tool state
+.aislop/history.jsonl
+.aislop/agent/
