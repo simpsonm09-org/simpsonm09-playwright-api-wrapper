@@ -1,18 +1,18 @@
-import { buildApp } from '../src/app.js';
-import { createTargetGuard } from '../src/config/allowlist.js';
-import { loadConfig, type Config } from '../src/config/env.js';
-import type { FlowRegistry } from '../src/config/flows.js';
-import type { AppDeps } from '../src/deps.js';
-import type { BrowserPool } from '../src/run/browser.js';
-import { ConcurrencyGate } from '../src/run/concurrency.js';
+import { buildApp } from "../src/app.js";
+import { createTargetGuard } from "../src/config/allowlist.js";
+import { type Config, loadConfig } from "../src/config/env.js";
+import type { FlowRegistry } from "../src/config/flows.js";
+import type { AppDeps } from "../src/deps.js";
+import type { BrowserPool } from "../src/run/browser.js";
+import { ConcurrencyGate } from "../src/run/concurrency.js";
 
-export const TEST_API_KEY = 'test-key';
+export const TEST_API_KEY = "test-key";
 
 export function testConfig(overrides: Record<string, string> = {}): Config {
   return loadConfig({
-    NODE_ENV: 'test',
+    NODE_ENV: "test",
     API_KEY: TEST_API_KEY,
-    LOG_LEVEL: 'silent',
+    LOG_LEVEL: "silent",
     ...overrides,
   });
 }
@@ -21,7 +21,7 @@ export function testConfig(overrides: Record<string, string> = {}): Config {
 export function fakePool(): BrowserPool {
   const pool = {
     get: async (): Promise<never> => {
-      throw new Error('browser must not be used in this test');
+      throw new Error("browser must not be used in this test");
     },
     ready: async (): Promise<boolean> => true,
     close: async (): Promise<void> => undefined,
@@ -51,5 +51,8 @@ export function buildTestApp(options: TestAppOptions = {}) {
 }
 
 export function authHeaders(): Record<string, string> {
-  return { authorization: `Bearer ${TEST_API_KEY}`, 'content-type': 'application/json' };
+  return {
+    authorization: `Bearer ${TEST_API_KEY}`,
+    "content-type": "application/json",
+  };
 }

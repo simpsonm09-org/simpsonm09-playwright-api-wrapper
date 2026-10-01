@@ -1,6 +1,6 @@
-import { chromium, type Browser } from 'playwright';
+import { type Browser, chromium } from "playwright";
 
-import type { Config } from '../config/env.js';
+import type { Config } from "../config/env.js";
 
 /** Lazily launches one shared Chromium and hands out isolated contexts per run. */
 export class BrowserPool {

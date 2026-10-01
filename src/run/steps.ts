@@ -1,20 +1,24 @@
-import type { Page } from 'playwright';
+import type { Page } from "playwright";
 
-import type { TargetGuard } from '../config/allowlist.js';
-import type { Step } from '../schema/request.js';
-import { ERROR_CODES, RunFailure } from './errors.js';
-import { describeLocator, resolveLocator } from './locators.js';
+import type { TargetGuard } from "../config/allowlist.js";
+import type { Step } from "../schema/request.js";
+import { ERROR_CODES, RunFailure } from "./errors.js";
+import { describeLocator, resolveLocator } from "./locators.js";
 
 export interface StepDeps {
   readonly guard: TargetGuard;
 }
 
 function isTimeoutError(error: unknown): boolean {
-  return error instanceof Error && error.name === 'TimeoutError';
+  return error instanceof Error && error.name === "TimeoutError";
 }
 
 function failStep(index: number, action: string, message: string): RunFailure {
-  return new RunFailure(ERROR_CODES.STEP_FAILED, `Step ${index} (${action}) failed: ${message}`, index);
+  return new RunFailure(
+    ERROR_CODES.STEP_FAILED,
+    `Step ${index} (${action}) failed: ${message}`,
+    index,
+  );
 }
 
 export async function executeStep(
@@ -25,23 +29,27 @@ export async function executeStep(
   outputs: Record<string, string>,
 ): Promise<void> {
   switch (step.action) {
-    case 'navigate': {
+    case "navigate": {
       await deps.guard.assertAllowed(step.url);
       try {
-        await page.goto(step.url, { waitUntil: 'domcontentloaded' });
+        await page.goto(step.url, { waitUntil: "domcontentloaded" });
       } catch (error) {
         if (isTimeoutError(error)) {
-          throw failStep(index, step.action, `navigation timed out for ${step.url}`);
+          throw failStep(
+            index,
+            step.action,
+            `navigation timed out for ${step.url}`,
+          );
         }
         throw failStep(index, step.action, `navigation failed for ${step.url}`);
       }
       return;
     }
-    case 'fill': {
+    case "fill": {
       await resolveLocator(page, step.target).fill(step.value);
       return;
     }
-    case 'click': {
+    case "click": {
       const locator = resolveLocator(page, step.target);
       if (step.button === undefined) {
         await locator.click();
@@ -50,35 +58,39 @@ export async function executeStep(
       }
       return;
     }
-    case 'press': {
+    case "press": {
       await resolveLocator(page, step.target).press(step.key);
       return;
     }
-    case 'selectOption': {
+    case "selectOption": {
       await resolveLocator(page, step.target).selectOption(step.value);
       return;
     }
-    case 'check': {
+    case "check": {
       await resolveLocator(page, step.target).check();
       return;
     }
-    case 'waitFor': {
+    case "waitFor": {
       const locator = resolveLocator(page, step.target);
-      const state = step.state ?? 'visible';
+      const state = step.state ?? "visible";
       try {
         await locator.waitFor({ state });
       } catch (error) {
         if (isTimeoutError(error)) {
-          throw failStep(index, step.action, `element not ${state}: ${describeLocator(step.target)}`);
+          throw failStep(
+            index,
+            step.action,
+            `element not ${state}: ${describeLocator(step.target)}`,
+          );
         }
         throw error;
       }
       return;
     }
-    case 'assertVisible': {
+    case "assertVisible": {
       const locator = resolveLocator(page, step.target);
       try {
-        await locator.waitFor({ state: 'visible' });
+        await locator.waitFor({ state: "visible" });
       } catch {
         throw new RunFailure(
           ERROR_CODES.ASSERTION_FAILED,
@@ -88,9 +100,13 @@ export async function executeStep(
       }
       return;
     }
-    case 'assertText': {
+    case "assertText": {
       if (step.equals === undefined && step.contains === undefined) {
-        throw failStep(index, step.action, 'one of equals or contains is required');
+        throw failStep(
+          index,
+          step.action,
+          "one of equals or contains is required",
+        );
       }
       const locator = resolveLocator(page, step.target);
       let text: string;
@@ -119,7 +135,7 @@ export async function executeStep(
       }
       return;
     }
-    case 'assertUrl': {
+    case "assertUrl": {
       const current = page.url();
       if (step.contains !== undefined && !current.includes(step.contains)) {
         throw new RunFailure(
@@ -133,7 +149,11 @@ export async function executeStep(
         try {
           pattern = new RegExp(step.matches);
         } catch {
-          throw failStep(index, step.action, `matches is not a valid regular expression`);
+          throw failStep(
+            index,
+            step.action,
+            `matches is not a valid regular expression`,
+          );
         }
         if (!pattern.test(current)) {
           throw new RunFailure(
@@ -145,12 +165,12 @@ export async function executeStep(
       }
       return;
     }
-    case 'readText': {
+    case "readText": {
       const text = await resolveLocator(page, step.target).innerText();
       outputs[step.as] = text.trim();
       return;
     }
-    case 'readInputValue': {
+    case "readInputValue": {
       outputs[step.as] = await resolveLocator(page, step.target).inputValue();
       return;
     }

@@ -1,7 +1,10 @@
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeEqual } from "node:crypto";
 
 /** Constant-time comparison of the bearer token. */
-export function isAuthorized(header: string | undefined, apiKey: string): boolean {
+export function isAuthorized(
+  header: string | undefined,
+  apiKey: string,
+): boolean {
   if (header === undefined) return false;
   const provided = Buffer.from(header);
   const expected = Buffer.from(`Bearer ${apiKey}`);

@@ -1,21 +1,25 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
-import type { AppDeps } from '../deps.js';
-import { ERROR_CODES, isRunFailure, RunFailure } from '../run/errors.js';
-import { executeRun, prepareRun, type PreparedRun } from '../run/runner.js';
-import { RunRequestSchema } from '../schema/request.js';
-import type { RunRequest } from '../schema/request.js';
-import { ErrorResponseSchema, RunResultSchema, type StepResult } from '../schema/response.js';
+import type { AppDeps } from "../deps.js";
+import { ERROR_CODES, isRunFailure, RunFailure } from "../run/errors.js";
+import { executeRun, type PreparedRun, prepareRun } from "../run/runner.js";
+import type { RunRequest } from "../schema/request.js";
+import { RunRequestSchema } from "../schema/request.js";
+import {
+  ErrorResponseSchema,
+  RunResultSchema,
+  type StepResult,
+} from "../schema/response.js";
 
 function acceptsEventStream(request: FastifyRequest): boolean {
   const accept = request.headers.accept;
-  return typeof accept === 'string' && accept.includes('text/event-stream');
+  return typeof accept === "string" && accept.includes("text/event-stream");
 }
 
 function readFailOnRunFailure(request: FastifyRequest): boolean {
   const query = request.query;
-  if (query === null || typeof query !== 'object') return false;
-  return (query as Record<string, unknown>)['failOnRunFailure'] === 'true';
+  if (query === null || typeof query !== "object") return false;
+  return (query as Record<string, unknown>)["failOnRunFailure"] === "true";
 }
 
 function asFailure(error: unknown): RunFailure {
@@ -34,30 +38,30 @@ async function streamRun(
   reply.hijack();
   const raw = reply.raw;
   raw.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache, no-transform',
-    Connection: 'keep-alive',
-    'X-Accel-Buffering': 'no',
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache, no-transform",
+    Connection: "keep-alive",
+    "X-Accel-Buffering": "no",
   });
 
   const write = (event: string, data: unknown): void => {
     raw.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   };
 
-  const heartbeat = setInterval(() => raw.write(': ping\n\n'), 15_000);
+  const heartbeat = setInterval(() => raw.write(": ping\n\n"), 15_000);
   const controller = new AbortController();
-  raw.on('close', () => controller.abort());
+  raw.on("close", () => controller.abort());
 
   try {
     const result = await executeRun(prepared, deps, {
-      sink: { onStep: (step: StepResult) => write('step', step) },
+      sink: { onStep: (step: StepResult) => write("step", step) },
       signal: controller.signal,
     });
-    write('result', result);
+    write("result", result);
   } catch (error) {
     const failure = asFailure(error);
-    write('result', {
-      status: 'failed',
+    write("result", {
+      status: "failed",
       error: { code: failure.code, message: failure.message },
     });
   } finally {
@@ -68,7 +72,7 @@ async function streamRun(
 
 export function registerRunRoutes(app: FastifyInstance, deps: AppDeps): void {
   app.post(
-    '/v1/runs',
+    "/v1/runs",
     {
       schema: {
         body: RunRequestSchema,
@@ -91,7 +95,11 @@ export function registerRunRoutes(app: FastifyInstance, deps: AppDeps): void {
       let prepared: PreparedRun;
       try {
         // Fastify validated the body against RunRequestSchema at the boundary.
-        prepared = prepareRun(request.body as RunRequest, deps.secrets, deps.flows);
+        prepared = prepareRun(
+          request.body as RunRequest,
+          deps.secrets,
+          deps.flows,
+        );
       } catch (error) {
         const failure = asFailure(error);
         reply.code(400);
@@ -102,7 +110,9 @@ export function registerRunRoutes(app: FastifyInstance, deps: AppDeps): void {
         await deps.guard.assertAllowed(prepared.target);
       } catch (error) {
         const failure = asFailure(error);
-        reply.code(failure.code === ERROR_CODES.TARGET_UNRESOLVABLE ? 502 : 403);
+        reply.code(
+          failure.code === ERROR_CODES.TARGET_UNRESOLVABLE ? 502 : 403,
+        );
         return { error: { code: failure.code, message: failure.message } };
       }
 
@@ -123,7 +133,7 @@ export function registerRunRoutes(app: FastifyInstance, deps: AppDeps): void {
           return undefined;
         }
         const result = await executeRun(prepared, deps, {});
-        reply.code(failOnRunFailure && result.status !== 'passed' ? 409 : 200);
+        reply.code(failOnRunFailure && result.status !== "passed" ? 409 : 200);
         return result;
       } finally {
         release();

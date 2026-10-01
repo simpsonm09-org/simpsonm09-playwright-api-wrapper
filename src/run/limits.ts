@@ -1,6 +1,6 @@
-import type { Config } from '../config/env.js';
-import type { RunOptions } from '../schema/request.js';
-import { ERROR_CODES, RunFailure } from './errors.js';
+import type { Config } from "../config/env.js";
+import type { RunOptions } from "../schema/request.js";
+import { ERROR_CODES, RunFailure } from "./errors.js";
 
 export interface Limits {
   readonly runTimeoutMs: number;
@@ -36,7 +36,7 @@ export function assertOutputsWithinLimit(
   outputs: Readonly<Record<string, string>>,
   config: Config,
 ): void {
-  const size = Buffer.byteLength(JSON.stringify(outputs), 'utf8');
+  const size = Buffer.byteLength(JSON.stringify(outputs), "utf8");
   if (size > config.maxOutputsBytes) {
     throw new RunFailure(
       ERROR_CODES.LIMIT_EXCEEDED,
