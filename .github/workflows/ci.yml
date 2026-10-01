@@ -59,3 +59,5 @@ jobs:
         run: npx vitest run test/e2e
       - name: Build
         run: npm run build
+      - name: Build the container image
+        run: docker build -t playwright-api-wrapper:ci .
