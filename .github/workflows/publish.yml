@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   publish:
+    if: github.repository_owner == 'simpsonm09-org'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -67,6 +68,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   newman:
+    if: github.repository_owner == 'simpsonm09-org'
     needs: publish
     runs-on: ubuntu-24.04
     permissions:
