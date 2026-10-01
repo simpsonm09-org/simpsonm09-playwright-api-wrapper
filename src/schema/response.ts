@@ -1,10 +1,10 @@
-import { Type, type Static } from '@sinclair/typebox';
+import { type Static, Type } from "@sinclair/typebox";
 
 export const RunStatusSchema = Type.Union([
-  Type.Literal('passed'),
-  Type.Literal('failed'),
-  Type.Literal('timedOut'),
-  Type.Literal('rejected'),
+  Type.Literal("passed"),
+  Type.Literal("failed"),
+  Type.Literal("timedOut"),
+  Type.Literal("rejected"),
 ]);
 export type RunStatus = Static<typeof RunStatusSchema>;
 
@@ -23,7 +23,11 @@ function stepResultSchema() {
   return Type.Object({
     index: Type.Integer({ minimum: 0 }),
     action: Type.String(),
-    status: Type.Union([Type.Literal('passed'), Type.Literal('failed'), Type.Literal('skipped')]),
+    status: Type.Union([
+      Type.Literal("passed"),
+      Type.Literal("failed"),
+      Type.Literal("skipped"),
+    ]),
     durationMs: Type.Integer({ minimum: 0 }),
   });
 }

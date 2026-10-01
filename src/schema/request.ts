@@ -1,4 +1,4 @@
-import { Type, type Static } from '@sinclair/typebox';
+import { type Static, Type } from "@sinclair/typebox";
 
 /**
  * Locators are a discriminated union. Accessible locators (role, label, testId)
@@ -7,14 +7,26 @@ import { Type, type Static } from '@sinclair/typebox';
 function locatorSchema() {
   return Type.Union([
     Type.Object({
-      by: Type.Literal('role'),
+      by: Type.Literal("role"),
       role: Type.String({ minLength: 1 }),
       name: Type.Optional(Type.String()),
     }),
-    Type.Object({ by: Type.Literal('label'), text: Type.String({ minLength: 1 }) }),
-    Type.Object({ by: Type.Literal('testId'), value: Type.String({ minLength: 1 }) }),
-    Type.Object({ by: Type.Literal('text'), text: Type.String({ minLength: 1 }) }),
-    Type.Object({ by: Type.Literal('css'), selector: Type.String({ minLength: 1 }) }),
+    Type.Object({
+      by: Type.Literal("label"),
+      text: Type.String({ minLength: 1 }),
+    }),
+    Type.Object({
+      by: Type.Literal("testId"),
+      value: Type.String({ minLength: 1 }),
+    }),
+    Type.Object({
+      by: Type.Literal("text"),
+      text: Type.String({ minLength: 1 }),
+    }),
+    Type.Object({
+      by: Type.Literal("css"),
+      selector: Type.String({ minLength: 1 }),
+    }),
   ]);
 }
 
@@ -22,62 +34,72 @@ export const LocatorSchema = locatorSchema();
 export type LocatorSpec = Static<typeof LocatorSchema>;
 
 const mouseButton = Type.Union([
-  Type.Literal('left'),
-  Type.Literal('right'),
-  Type.Literal('middle'),
+  Type.Literal("left"),
+  Type.Literal("right"),
+  Type.Literal("middle"),
 ]);
 
 const waitState = Type.Union([
-  Type.Literal('attached'),
-  Type.Literal('detached'),
-  Type.Literal('visible'),
-  Type.Literal('hidden'),
+  Type.Literal("attached"),
+  Type.Literal("detached"),
+  Type.Literal("visible"),
+  Type.Literal("hidden"),
 ]);
 
 function stepSchema() {
   return Type.Union([
-    Type.Object({ action: Type.Literal('navigate'), url: Type.String({ minLength: 1 }) }),
-    Type.Object({ action: Type.Literal('fill'), target: locatorSchema(), value: Type.String() }),
     Type.Object({
-      action: Type.Literal('click'),
+      action: Type.Literal("navigate"),
+      url: Type.String({ minLength: 1 }),
+    }),
+    Type.Object({
+      action: Type.Literal("fill"),
+      target: locatorSchema(),
+      value: Type.String(),
+    }),
+    Type.Object({
+      action: Type.Literal("click"),
       target: locatorSchema(),
       button: Type.Optional(mouseButton),
     }),
     Type.Object({
-      action: Type.Literal('press'),
+      action: Type.Literal("press"),
       target: locatorSchema(),
       key: Type.String({ minLength: 1 }),
     }),
     Type.Object({
-      action: Type.Literal('selectOption'),
+      action: Type.Literal("selectOption"),
       target: locatorSchema(),
       value: Type.String(),
     }),
-    Type.Object({ action: Type.Literal('check'), target: locatorSchema() }),
+    Type.Object({ action: Type.Literal("check"), target: locatorSchema() }),
     Type.Object({
-      action: Type.Literal('waitFor'),
+      action: Type.Literal("waitFor"),
       target: locatorSchema(),
       state: Type.Optional(waitState),
     }),
-    Type.Object({ action: Type.Literal('assertVisible'), target: locatorSchema() }),
     Type.Object({
-      action: Type.Literal('assertText'),
+      action: Type.Literal("assertVisible"),
+      target: locatorSchema(),
+    }),
+    Type.Object({
+      action: Type.Literal("assertText"),
       target: locatorSchema(),
       equals: Type.Optional(Type.String()),
       contains: Type.Optional(Type.String()),
     }),
     Type.Object({
-      action: Type.Literal('assertUrl'),
+      action: Type.Literal("assertUrl"),
       contains: Type.Optional(Type.String()),
       matches: Type.Optional(Type.String()),
     }),
     Type.Object({
-      action: Type.Literal('readText'),
+      action: Type.Literal("readText"),
       target: locatorSchema(),
       as: Type.String({ minLength: 1 }),
     }),
     Type.Object({
-      action: Type.Literal('readInputValue'),
+      action: Type.Literal("readInputValue"),
       target: locatorSchema(),
       as: Type.String({ minLength: 1 }),
     }),
@@ -91,7 +113,7 @@ export const RunOptionsSchema = Type.Object({
   timeoutMs: Type.Optional(Type.Integer({ minimum: 1000, maximum: 600000 })),
   stepTimeoutMs: Type.Optional(Type.Integer({ minimum: 100, maximum: 120000 })),
   failFast: Type.Optional(Type.Boolean()),
-  browser: Type.Optional(Type.Literal('chromium')),
+  browser: Type.Optional(Type.Literal("chromium")),
 });
 export type RunOptions = Static<typeof RunOptionsSchema>;
 

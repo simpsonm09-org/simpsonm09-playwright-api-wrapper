@@ -1,5 +1,9 @@
-import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { pathToFileURL } from 'node:url';
+import {
+  createServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from "node:http";
+import { pathToFileURL } from "node:url";
 
 /**
  * Tiny deterministic fixture site used by the e2e test. Plain node http, no
@@ -28,10 +32,10 @@ let submissionCounter = 0;
 
 function escapeHtml(value: string): string {
   return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;');
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 function html(body: string): string {
@@ -45,15 +49,19 @@ function html(body: string): string {
 async function readBody(request: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of request) chunks.push(chunk as Buffer);
-  return Buffer.concat(chunks).toString('utf8');
+  return Buffer.concat(chunks).toString("utf8");
 }
 
-function parseFields(raw: string, contentType: string | undefined): Record<string, string> {
-  if (contentType?.includes('application/json') === true) {
+function parseFields(
+  raw: string,
+  contentType: string | undefined,
+): Record<string, string> {
+  if (contentType?.includes("application/json") === true) {
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       const out: Record<string, string> = {};
-      for (const [key, value] of Object.entries(parsed)) out[key] = String(value);
+      for (const [key, value] of Object.entries(parsed))
+        out[key] = String(value);
       return out;
     } catch {
       return {};
@@ -62,17 +70,25 @@ function parseFields(raw: string, contentType: string | undefined): Record<strin
   return Object.fromEntries(new URLSearchParams(raw));
 }
 
-function sendJson(response: ServerResponse, status: number, body: unknown): void {
+function sendJson(
+  response: ServerResponse,
+  status: number,
+  body: unknown,
+): void {
   const payload = JSON.stringify(body);
   response.writeHead(status, {
-    'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(payload),
+    "Content-Type": "application/json",
+    "Content-Length": Buffer.byteLength(payload),
   });
   response.end(payload);
 }
 
-function sendHtml(response: ServerResponse, status: number, body: string): void {
-  response.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8' });
+function sendHtml(
+  response: ServerResponse,
+  status: number,
+  body: string,
+): void {
+  response.writeHead(status, { "Content-Type": "text/html; charset=utf-8" });
   response.end(body);
 }
 
@@ -131,24 +147,27 @@ function renderSubmission(submission: Submission): string {
 <p>Notes: <span data-testid="result-notes">${escapeHtml(submission.notes)}</span></p>`);
 }
 
-async function handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
-  const method = request.method ?? 'GET';
-  const url = new URL(request.url ?? '/', 'http://fixture');
+async function handle(
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<void> {
+  const method = request.method ?? "GET";
+  const url = new URL(request.url ?? "/", "http://fixture");
   const path = url.pathname;
 
-  if (method === 'GET' && path === '/healthz') {
-    sendJson(response, 200, { status: 'ok' });
+  if (method === "GET" && path === "/healthz") {
+    sendJson(response, 200, { status: "ok" });
     return;
   }
-  if (method === 'GET' && path === '/checkout') {
+  if (method === "GET" && path === "/checkout") {
     sendHtml(response, 200, renderCheckout());
     return;
   }
-  if (method === 'GET' && path === '/form') {
+  if (method === "GET" && path === "/form") {
     sendHtml(response, 200, renderForm());
     return;
   }
-  if (method === 'POST' && path === '/__reset') {
+  if (method === "POST" && path === "/__reset") {
     orders.clear();
     submissions.clear();
     counter = 0;
@@ -157,12 +176,15 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
     response.end();
     return;
   }
-  if (method === 'POST' && path === '/orders') {
-    const fields = parseFields(await readBody(request), request.headers['content-type']);
-    const email = fields['email'] ?? '';
-    const card = fields['card'] ?? '';
-    if (email === '' || card === '') {
-      sendHtml(response, 400, html('<h1>Missing fields</h1>'));
+  if (method === "POST" && path === "/orders") {
+    const fields = parseFields(
+      await readBody(request),
+      request.headers["content-type"],
+    );
+    const email = fields["email"] ?? "";
+    const card = fields["card"] ?? "";
+    if (email === "" || card === "") {
+      sendHtml(response, 400, html("<h1>Missing fields</h1>"));
       return;
     }
     counter += 1;
@@ -175,22 +197,25 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
     sendHtml(response, 201, renderConfirmation(order));
     return;
   }
-  if (method === 'GET' && path.startsWith('/orders/')) {
-    const id = decodeURIComponent(path.slice('/orders/'.length));
+  if (method === "GET" && path.startsWith("/orders/")) {
+    const id = decodeURIComponent(path.slice("/orders/".length));
     const order = orders.get(id);
     if (order === undefined) {
-      sendJson(response, 404, { error: 'not found' });
+      sendJson(response, 404, { error: "not found" });
       return;
     }
     sendJson(response, 200, order);
     return;
   }
-  if (method === 'POST' && path === '/form') {
-    const fields = parseFields(await readBody(request), request.headers['content-type']);
-    const name = fields['name'] ?? '';
-    const email = fields['email'] ?? '';
-    if (name === '' || email === '') {
-      sendHtml(response, 400, html('<h1>Missing fields</h1>'));
+  if (method === "POST" && path === "/form") {
+    const fields = parseFields(
+      await readBody(request),
+      request.headers["content-type"],
+    );
+    const name = fields["name"] ?? "";
+    const email = fields["email"] ?? "";
+    if (name === "" || email === "") {
+      sendHtml(response, 400, html("<h1>Missing fields</h1>"));
       return;
     }
     submissionCounter += 1;
@@ -198,43 +223,47 @@ async function handle(request: IncomingMessage, response: ServerResponse): Promi
       id: `sub_${1000 + submissionCounter}`,
       name,
       email,
-      plan: fields['plan'] === undefined || fields['plan'] === '' ? 'free' : fields['plan'],
-      news: fields['news'] === 'on' ? 'yes' : 'no',
-      notes: fields['notes'] ?? '',
+      plan:
+        fields["plan"] === undefined || fields["plan"] === ""
+          ? "free"
+          : fields["plan"],
+      news: fields["news"] === "on" ? "yes" : "no",
+      notes: fields["notes"] ?? "",
     };
     submissions.set(submission.id, submission);
     sendHtml(response, 201, renderSubmission(submission));
     return;
   }
-  if (method === 'GET' && path.startsWith('/submissions/')) {
-    const id = decodeURIComponent(path.slice('/submissions/'.length));
+  if (method === "GET" && path.startsWith("/submissions/")) {
+    const id = decodeURIComponent(path.slice("/submissions/".length));
     const submission = submissions.get(id);
     if (submission === undefined) {
-      sendJson(response, 404, { error: 'not found' });
+      sendJson(response, 404, { error: "not found" });
       return;
     }
     sendJson(response, 200, submission);
     return;
   }
 
-  sendJson(response, 404, { error: 'not found' });
+  sendJson(response, 404, { error: "not found" });
 }
 
 export function startFixture(
   port: number,
-  host = '127.0.0.1',
+  host = "127.0.0.1",
 ): Promise<{ port: number; close: () => Promise<void> }> {
   const server = createServer((request, response) => {
     handle(request, response).catch(() => {
-      if (!response.headersSent) sendJson(response, 500, { error: 'internal' });
+      if (!response.headersSent) sendJson(response, 500, { error: "internal" });
       else response.end();
     });
   });
   return new Promise((resolve, reject) => {
-    server.once('error', reject);
+    server.once("error", reject);
     server.listen(port, host, () => {
       const address = server.address();
-      const boundPort = typeof address === 'object' && address !== null ? address.port : port;
+      const boundPort =
+        typeof address === "object" && address !== null ? address.port : port;
       resolve({
         port: boundPort,
         close: () =>
@@ -251,7 +280,7 @@ const isMain =
   import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   const port = Number(process.env.FIXTURE_PORT ?? 4010);
-  const host = process.env.FIXTURE_HOST ?? '127.0.0.1';
+  const host = process.env.FIXTURE_HOST ?? "127.0.0.1";
   startFixture(port, host).then(() => {
     process.stdout.write(`fixture listening on http://${host}:${port}\n`);
   });

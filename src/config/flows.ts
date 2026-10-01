@@ -1,9 +1,14 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync } from "node:fs";
 
-import { Type, type Static } from '@sinclair/typebox';
-import { Value } from '@sinclair/typebox/value';
+import { type Static, Type } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 
-import { RunOptionsSchema, StepSchema, type RunOptions, type Step } from '../schema/request.js';
+import {
+  type RunOptions,
+  RunOptionsSchema,
+  type Step,
+  StepSchema,
+} from "../schema/request.js";
 
 const FlowSchema = Type.Object({
   steps: Type.Array(StepSchema, { minItems: 1, maxItems: 200 }),
@@ -27,11 +32,11 @@ export type FlowRegistry = ReadonlyMap<string, Flow>;
  * file is a startup error, not a per-request one.
  */
 export function loadFlows(filePath: string | undefined): FlowRegistry {
-  if (filePath === undefined || filePath.trim() === '') return new Map();
+  if (filePath === undefined || filePath.trim() === "") return new Map();
 
   let raw: string;
   try {
-    raw = readFileSync(filePath, 'utf8');
+    raw = readFileSync(filePath, "utf8");
   } catch {
     throw new Error(`FLOWS_FILE could not be read: ${filePath}`);
   }
@@ -45,15 +50,22 @@ export function loadFlows(filePath: string | undefined): FlowRegistry {
 
   if (!Value.Check(FlowsFileSchema, parsed)) {
     const first = Value.Errors(FlowsFileSchema, parsed).First();
-    const detail = first === undefined ? '' : ` at ${first.path} (${first.message})`;
-    throw new Error(`FLOWS_FILE is not a valid flows file: ${filePath}${detail}`);
+    const detail =
+      first === undefined ? "" : ` at ${first.path} (${first.message})`;
+    throw new Error(
+      `FLOWS_FILE is not a valid flows file: ${filePath}${detail}`,
+    );
   }
 
   const flows = new Map<string, Flow>();
-  for (const [name, flow] of Object.entries(parsed as Record<string, Static<typeof FlowSchema>>)) {
+  for (const [name, flow] of Object.entries(
+    parsed as Record<string, Static<typeof FlowSchema>>,
+  )) {
     flows.set(
       name,
-      flow.options === undefined ? { steps: flow.steps } : { steps: flow.steps, options: flow.options },
+      flow.options === undefined
+        ? { steps: flow.steps }
+        : { steps: flow.steps, options: flow.options },
     );
   }
   return flows;
