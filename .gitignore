@@ -16,3 +16,6 @@ trivy.sarif
 .aislop/history.jsonl
 .aislop/agent/
 coverage/
+
+# Verification evidence (project-local verify skill)
+artifacts/
