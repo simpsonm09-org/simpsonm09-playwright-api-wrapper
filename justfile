@@ -29,6 +29,8 @@ test:
 
 # Run the tests and write an lcov report to coverage/lcov.info.
 coverage:
+    npm ci
+    npx playwright install --with-deps chromium
     npm run coverage
 
 # Lint and test.
