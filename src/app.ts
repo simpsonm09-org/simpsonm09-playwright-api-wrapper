@@ -6,6 +6,19 @@ import type { AppDeps } from "./deps.js";
 import { registerHealthRoutes } from "./routes/health.js";
 import { registerRunRoutes } from "./routes/runs.js";
 
+function errorCode(status: number): string {
+  if (status === 400) return "VALIDATION_FAILED";
+  if (status === 401) return "UNAUTHORIZED";
+  if (status === 413) return "PAYLOAD_TOO_LARGE";
+  if (status >= 500) return "INTERNAL";
+  return "REQUEST_FAILED";
+}
+
+function errorMessage(status: number, failure: { message?: string }): string {
+  if (status >= 500) return "Internal server error";
+  return failure.message ?? "Request failed";
+}
+
 export function buildApp(deps: AppDeps): FastifyInstance {
   const app = Fastify({
     logger: {
@@ -41,21 +54,12 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     const failure = error as { statusCode?: number; message?: string };
     const status =
       typeof failure.statusCode === "number" ? failure.statusCode : 500;
-    const code =
-      status === 400
-        ? "VALIDATION_FAILED"
-        : status === 401
-          ? "UNAUTHORIZED"
-          : status === 413
-            ? "PAYLOAD_TOO_LARGE"
-            : status >= 500
-              ? "INTERNAL"
-              : "REQUEST_FAILED";
-    const message =
-      status >= 500
-        ? "Internal server error"
-        : (failure.message ?? "Request failed");
-    reply.code(status).send({ error: { code, message } });
+    reply.code(status).send({
+      error: {
+        code: errorCode(status),
+        message: errorMessage(status, failure),
+      },
+    });
   });
 
   registerHealthRoutes(app, deps);

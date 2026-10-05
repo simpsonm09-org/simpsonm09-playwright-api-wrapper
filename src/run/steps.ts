@@ -21,6 +21,145 @@ function failStep(index: number, action: string, message: string): RunFailure {
   );
 }
 
+type StepOf<A extends Step["action"]> = Extract<Step, { action: A }>;
+
+async function executeNavigate(
+  page: Page,
+  step: StepOf<"navigate">,
+  index: number,
+  deps: StepDeps,
+): Promise<void> {
+  await deps.guard.assertAllowed(step.url);
+  try {
+    await page.goto(step.url, { waitUntil: "domcontentloaded" });
+  } catch (error) {
+    if (isTimeoutError(error)) {
+      throw failStep(
+        index,
+        step.action,
+        `navigation timed out for ${step.url}`,
+      );
+    }
+    throw failStep(index, step.action, `navigation failed for ${step.url}`);
+  }
+}
+
+async function executeClick(page: Page, step: StepOf<"click">): Promise<void> {
+  const locator = resolveLocator(page, step.target);
+  if (step.button === undefined) {
+    await locator.click();
+  } else {
+    await locator.click({ button: step.button });
+  }
+}
+
+async function executeWaitFor(
+  page: Page,
+  step: StepOf<"waitFor">,
+  index: number,
+): Promise<void> {
+  const locator = resolveLocator(page, step.target);
+  const state = step.state ?? "visible";
+  try {
+    await locator.waitFor({ state });
+  } catch (error) {
+    if (isTimeoutError(error)) {
+      throw failStep(
+        index,
+        step.action,
+        `element not ${state}: ${describeLocator(step.target)}`,
+      );
+    }
+    throw error;
+  }
+}
+
+async function executeAssertVisible(
+  page: Page,
+  step: StepOf<"assertVisible">,
+  index: number,
+): Promise<void> {
+  const locator = resolveLocator(page, step.target);
+  try {
+    await locator.waitFor({ state: "visible" });
+  } catch {
+    throw new RunFailure(
+      ERROR_CODES.ASSERTION_FAILED,
+      `Step ${index} (assertVisible) failed: not visible: ${describeLocator(step.target)}`,
+      index,
+    );
+  }
+}
+
+async function executeAssertText(
+  page: Page,
+  step: StepOf<"assertText">,
+  index: number,
+): Promise<void> {
+  if (step.equals === undefined && step.contains === undefined) {
+    throw failStep(index, step.action, "one of equals or contains is required");
+  }
+  const locator = resolveLocator(page, step.target);
+  let text: string;
+  try {
+    text = await locator.innerText();
+  } catch {
+    throw new RunFailure(
+      ERROR_CODES.ASSERTION_FAILED,
+      `Step ${index} (assertText) failed: element not found: ${describeLocator(step.target)}`,
+      index,
+    );
+  }
+  if (step.equals !== undefined && text.trim() !== step.equals) {
+    throw new RunFailure(
+      ERROR_CODES.ASSERTION_FAILED,
+      `Step ${index} (assertText) failed: expected exactly ${JSON.stringify(step.equals)}, got ${JSON.stringify(text)}`,
+      index,
+    );
+  }
+  if (step.contains !== undefined && !text.includes(step.contains)) {
+    throw new RunFailure(
+      ERROR_CODES.ASSERTION_FAILED,
+      `Step ${index} (assertText) failed: expected to contain ${JSON.stringify(step.contains)}, got ${JSON.stringify(text)}`,
+      index,
+    );
+  }
+}
+
+async function executeAssertUrl(
+  page: Page,
+  step: StepOf<"assertUrl">,
+  index: number,
+): Promise<void> {
+  const current = page.url();
+  if (step.contains !== undefined && !current.includes(step.contains)) {
+    throw new RunFailure(
+      ERROR_CODES.ASSERTION_FAILED,
+      `Step ${index} (assertUrl) failed: expected url to contain ${JSON.stringify(step.contains)}, got ${JSON.stringify(current)}`,
+      index,
+    );
+  }
+  if (step.matches !== undefined) {
+    let pattern: RegExp;
+    try {
+      pattern = new RegExp(step.matches);
+    } catch {
+      throw failStep(
+        index,
+        step.action,
+        `matches is not a valid regular expression`,
+      );
+    }
+    if (!pattern.test(current)) {
+      throw new RunFailure(
+        ERROR_CODES.ASSERTION_FAILED,
+        `Step ${index} (assertUrl) failed: expected url to match ${JSON.stringify(step.matches)}, got ${JSON.stringify(current)}`,
+        index,
+      );
+    }
+  }
+}
+
 export async function executeStep(
   page: Page,
   step: Step,
@@ -29,142 +168,36 @@ export async function executeStep(
   outputs: Record<string, string>,
 ): Promise<void> {
   switch (step.action) {
-    case "navigate": {
-      await deps.guard.assertAllowed(step.url);
-      try {
-        await page.goto(step.url, { waitUntil: "domcontentloaded" });
-      } catch (error) {
-        if (isTimeoutError(error)) {
-          throw failStep(
-            index,
-            step.action,
-            `navigation timed out for ${step.url}`,
-          );
-        }
-        throw failStep(index, step.action, `navigation failed for ${step.url}`);
-      }
+    case "navigate":
+      await executeNavigate(page, step, index, deps);
       return;
-    }
-    case "fill": {
+    case "fill":
       await resolveLocator(page, step.target).fill(step.value);
       return;
-    }
-    case "click": {
-      const locator = resolveLocator(page, step.target);
-      if (step.button === undefined) {
-        await locator.click();
-      } else {
-        await locator.click({ button: step.button });
-      }
+    case "click":
+      await executeClick(page, step);
       return;
-    }
-    case "press": {
+    case "press":
       await resolveLocator(page, step.target).press(step.key);
       return;
-    }
-    case "selectOption": {
+    case "selectOption":
       await resolveLocator(page, step.target).selectOption(step.value);
       return;
-    }
-    case "check": {
+    case "check":
       await resolveLocator(page, step.target).check();
       return;
-    }
-    case "waitFor": {
-      const locator = resolveLocator(page, step.target);
-      const state = step.state ?? "visible";
-      try {
-        await locator.waitFor({ state });
-      } catch (error) {
-        if (isTimeoutError(error)) {
-          throw failStep(
-            index,
-            step.action,
-            `element not ${state}: ${describeLocator(step.target)}`,
-          );
-        }
-        throw error;
-      }
+    case "waitFor":
+      await executeWaitFor(page, step, index);
       return;
-    }
-    case "assertVisible": {
-      const locator = resolveLocator(page, step.target);
-      try {
-        await locator.waitFor({ state: "visible" });
-      } catch {
-        throw new RunFailure(
-          ERROR_CODES.ASSERTION_FAILED,
-          `Step ${index} (assertVisible) failed: not visible: ${describeLocator(step.target)}`,
-          index,
-        );
-      }
+    case "assertVisible":
+      await executeAssertVisible(page, step, index);
       return;
-    }
-    case "assertText": {
-      if (step.equals === undefined && step.contains === undefined) {
-        throw failStep(
-          index,
-          step.action,
-          "one of equals or contains is required",
-        );
-      }
-      const locator = resolveLocator(page, step.target);
-      let text: string;
-      try {
-        text = await locator.innerText();
-      } catch {
-        throw new RunFailure(
-          ERROR_CODES.ASSERTION_FAILED,
-          `Step ${index} (assertText) failed: element not found: ${describeLocator(step.target)}`,
-          index,
-        );
-      }
-      if (step.equals !== undefined && text.trim() !== step.equals) {
-        throw new RunFailure(
-          ERROR_CODES.ASSERTION_FAILED,
-          `Step ${index} (assertText) failed: expected exactly ${JSON.stringify(step.equals)}, got ${JSON.stringify(text)}`,
-          index,
-        );
-      }
-      if (step.contains !== undefined && !text.includes(step.contains)) {
-        throw new RunFailure(
-          ERROR_CODES.ASSERTION_FAILED,
-          `Step ${index} (assertText) failed: expected to contain ${JSON.stringify(step.contains)}, got ${JSON.stringify(text)}`,
-          index,
-        );
-      }
+    case "assertText":
+      await executeAssertText(page, step, index);
       return;
-    }
-    case "assertUrl": {
-      const current = page.url();
-      if (step.contains !== undefined && !current.includes(step.contains)) {
-        throw new RunFailure(
-          ERROR_CODES.ASSERTION_FAILED,
-          `Step ${index} (assertUrl) failed: expected url to contain ${JSON.stringify(step.contains)}, got ${JSON.stringify(current)}`,
-          index,
-        );
-      }
-      if (step.matches !== undefined) {
-        let pattern: RegExp;
-        try {
-          pattern = new RegExp(step.matches);
-        } catch {
-          throw failStep(
-            index,
-            step.action,
-            `matches is not a valid regular expression`,
-          );
-        }
-        if (!pattern.test(current)) {
-          throw new RunFailure(
-            ERROR_CODES.ASSERTION_FAILED,
-            `Step ${index} (assertUrl) failed: expected url to match ${JSON.stringify(step.matches)}, got ${JSON.stringify(current)}`,
-            index,
-          );
-        }
-      }
+    case "assertUrl":
+      await executeAssertUrl(page, step, index);
       return;
-    }
     case "readText": {
       const text = await resolveLocator(page, step.target).innerText();
       outputs[step.as] = text.trim();
