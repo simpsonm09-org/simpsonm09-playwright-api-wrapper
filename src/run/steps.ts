@@ -139,24 +139,12 @@ async function executeAssertUrl(
       index,
     );
   }
-  if (step.matches !== undefined) {
-    let pattern: RegExp;
-    try {
-      pattern = new RegExp(step.matches);
-    } catch {
-      throw failStep(
-        index,
-        step.action,
-        `matches is not a valid regular expression`,
-      );
-    }
-    if (!pattern.test(current)) {
-      throw new RunFailure(
-        ERROR_CODES.ASSERTION_FAILED,
-        `Step ${index} (assertUrl) failed: expected url to match ${JSON.stringify(step.matches)}, got ${JSON.stringify(current)}`,
-        index,
-      );
-    }
+  if (step.matches !== undefined && !current.includes(step.matches)) {
+    throw new RunFailure(
+      ERROR_CODES.ASSERTION_FAILED,
+      `Step ${index} (assertUrl) failed: expected url to match ${JSON.stringify(step.matches)}, got ${JSON.stringify(current)}`,
+      index,
+    );
   }
 }
 
