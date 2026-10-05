@@ -2,7 +2,11 @@ import type { Page } from "playwright";
 import { describe, expect, it, vi } from "vitest";
 
 import type { TargetGuard } from "../../src/config/allowlist.js";
-import { ERROR_CODES, isRunFailure, RunFailure } from "../../src/run/errors.js";
+import {
+  ERROR_CODES,
+  isRunFailure,
+  type RunFailure,
+} from "../../src/run/errors.js";
 import { executeStep } from "../../src/run/steps.js";
 import type { Step } from "../../src/schema/request.js";
 
@@ -72,7 +76,11 @@ interface RunOptions {
 async function runStep(
   step: Step,
   options: RunOptions = {},
-): Promise<{ page: FakePage; locator: FakeLocator; outputs: Record<string, string> }> {
+): Promise<{
+  page: FakePage;
+  locator: FakeLocator;
+  outputs: Record<string, string>;
+}> {
   const locator = options.locator ?? fakeLocator();
   const page = options.page ?? fakePage(locator, options.url);
   const outputs: Record<string, string> = {};
