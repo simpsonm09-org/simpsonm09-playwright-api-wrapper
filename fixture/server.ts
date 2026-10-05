@@ -147,6 +147,133 @@ function renderSubmission(submission: Submission): string {
 <p>Notes: <span data-testid="result-notes">${escapeHtml(submission.notes)}</span></p>`);
 }
 
+function resetState(response: ServerResponse): void {
+  orders.clear();
+  submissions.clear();
+  counter = 0;
+  submissionCounter = 0;
+  response.writeHead(204);
+  response.end();
+}
+
+async function createOrder(
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<void> {
+  const fields = parseFields(
+    await readBody(request),
+    request.headers["content-type"],
+  );
+  const email = fields["email"] ?? "";
+  const card = fields["card"] ?? "";
+  if (email === "" || card === "") {
+    sendHtml(response, 400, html("<h1>Missing fields</h1>"));
+    return;
+  }
+  counter += 1;
+  const order: Order = {
+    id: `ord_${1000 + counter}`,
+    email,
+    cardLast4: card.slice(-4),
+  };
+  orders.set(order.id, order);
+  sendHtml(response, 201, renderConfirmation(order));
+}
+
+function getOrder(path: string, response: ServerResponse): void {
+  const id = decodeURIComponent(path.slice("/orders/".length));
+  const order = orders.get(id);
+  if (order === undefined) {
+    sendJson(response, 404, { error: "not found" });
+    return;
+  }
+  sendJson(response, 200, order);
+}
+
+async function createSubmission(
+  request: IncomingMessage,
+  response: ServerResponse,
+): Promise<void> {
+  const fields = parseFields(
+    await readBody(request),
+    request.headers["content-type"],
+  );
+  const name = fields["name"] ?? "";
+  const email = fields["email"] ?? "";
+  if (name === "" || email === "") {
+    sendHtml(response, 400, html("<h1>Missing fields</h1>"));
+    return;
+  }
+  submissionCounter += 1;
+  const submission: Submission = {
+    id: `sub_${1000 + submissionCounter}`,
+    name,
+    email,
+    plan:
+      fields["plan"] === undefined || fields["plan"] === ""
+        ? "free"
+        : fields["plan"],
+    news: fields["news"] === "on" ? "yes" : "no",
+    notes: fields["notes"] ?? "",
+  };
+  submissions.set(submission.id, submission);
+  sendHtml(response, 201, renderSubmission(submission));
+}
+
+function getSubmission(path: string, response: ServerResponse): void {
+  const id = decodeURIComponent(path.slice("/submissions/".length));
+  const submission = submissions.get(id);
+  if (submission === undefined) {
+    sendJson(response, 404, { error: "not found" });
+    return;
+  }
+  sendJson(response, 200, submission);
+}
+
+function handleGet(path: string, response: ServerResponse): void {
+  if (path === "/healthz") {
+    sendJson(response, 200, { status: "ok" });
+    return;
+  }
+  if (path === "/checkout") {
+    sendHtml(response, 200, renderCheckout());
+    return;
+  }
+  if (path === "/form") {
+    sendHtml(response, 200, renderForm());
+    return;
+  }
+  if (path.startsWith("/orders/")) {
+    getOrder(path, response);
+    return;
+  }
+  if (path.startsWith("/submissions/")) {
+    getSubmission(path, response);
+    return;
+  }
+  sendJson(response, 404, { error: "not found" });
+}
+
+async function handlePost(
+  request: IncomingMessage,
+  path: string,
+  response: ServerResponse,
+): Promise<void> {
+  if (path === "/__reset") {
+    resetState(response);
+    return;
+  }
+  if (path === "/orders") {
+    await createOrder(request, response);
+    return;
+  }
+  if (path === "/form") {
+    await createSubmission(request, response);
+    return;
+  }
+  sendJson(response, 404, { error: "not found" });
+}
+
 async function handle(
   request: IncomingMessage,
   response: ServerResponse,
@@ -155,96 +282,14 @@ async function handle(
   const url = new URL(request.url ?? "/", "http://fixture");
   const path = url.pathname;
 
-  if (method === "GET" && path === "/healthz") {
-    sendJson(response, 200, { status: "ok" });
+  if (method === "GET") {
+    handleGet(path, response);
     return;
   }
-  if (method === "GET" && path === "/checkout") {
-    sendHtml(response, 200, renderCheckout());
+  if (method === "POST") {
+    await handlePost(request, path, response);
     return;
   }
-  if (method === "GET" && path === "/form") {
-    sendHtml(response, 200, renderForm());
-    return;
-  }
-  if (method === "POST" && path === "/__reset") {
-    orders.clear();
-    submissions.clear();
-    counter = 0;
-    submissionCounter = 0;
-    response.writeHead(204);
-    response.end();
-    return;
-  }
-  if (method === "POST" && path === "/orders") {
-    const fields = parseFields(
-      await readBody(request),
-      request.headers["content-type"],
-    );
-    const email = fields["email"] ?? "";
-    const card = fields["card"] ?? "";
-    if (email === "" || card === "") {
-      sendHtml(response, 400, html("<h1>Missing fields</h1>"));
-      return;
-    }
-    counter += 1;
-    const order: Order = {
-      id: `ord_${1000 + counter}`,
-      email,
-      cardLast4: card.slice(-4),
-    };
-    orders.set(order.id, order);
-    sendHtml(response, 201, renderConfirmation(order));
-    return;
-  }
-  if (method === "GET" && path.startsWith("/orders/")) {
-    const id = decodeURIComponent(path.slice("/orders/".length));
-    const order = orders.get(id);
-    if (order === undefined) {
-      sendJson(response, 404, { error: "not found" });
-      return;
-    }
-    sendJson(response, 200, order);
-    return;
-  }
-  if (method === "POST" && path === "/form") {
-    const fields = parseFields(
-      await readBody(request),
-      request.headers["content-type"],
-    );
-    const name = fields["name"] ?? "";
-    const email = fields["email"] ?? "";
-    if (name === "" || email === "") {
-      sendHtml(response, 400, html("<h1>Missing fields</h1>"));
-      return;
-    }
-    submissionCounter += 1;
-    const submission: Submission = {
-      id: `sub_${1000 + submissionCounter}`,
-      name,
-      email,
-      plan:
-        fields["plan"] === undefined || fields["plan"] === ""
-          ? "free"
-          : fields["plan"],
-      news: fields["news"] === "on" ? "yes" : "no",
-      notes: fields["notes"] ?? "",
-    };
-    submissions.set(submission.id, submission);
-    sendHtml(response, 201, renderSubmission(submission));
-    return;
-  }
-  if (method === "GET" && path.startsWith("/submissions/")) {
-    const id = decodeURIComponent(path.slice("/submissions/".length));
-    const submission = submissions.get(id);
-    if (submission === undefined) {
-      sendJson(response, 404, { error: "not found" });
-      return;
-    }
-    sendJson(response, 200, submission);
-    return;
-  }
-
   sendJson(response, 404, { error: "not found" });
 }
 
