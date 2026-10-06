@@ -1,7 +1,8 @@
 node_modules/
 dist/
 .env
-.env.local
+.env.*
+!.env.example
 postman/environment.local.json
 test-results/
 *.log
