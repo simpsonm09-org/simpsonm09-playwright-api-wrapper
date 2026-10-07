@@ -45,17 +45,23 @@ export function makeTemplateResolver(scope: TemplateScope): TemplateResolver {
     });
   }
 
-  function resolveDeep<T>(value: T): T {
-    if (typeof value === "string") return resolveString(value) as unknown as T;
+  // Rebuild the value from its runtime shape. The generic entry point holds the
+  // only cast back to the caller's type, so the recursion stays honest.
+  function resolveUnknown(value: unknown): unknown {
+    if (typeof value === "string") return resolveString(value);
     if (Array.isArray(value))
-      return value.map((entry) => resolveDeep(entry)) as unknown as T;
+      return value.map((entry) => resolveUnknown(entry));
     if (value !== null && typeof value === "object") {
       const out: Record<string, unknown> = {};
       for (const [key, entry] of Object.entries(value))
-        out[key] = resolveDeep(entry);
-      return out as unknown as T;
+        out[key] = resolveUnknown(entry);
+      return out;
     }
     return value;
+  }
+
+  function resolveDeep<T>(value: T): T {
+    return resolveUnknown(value) as T;
   }
 
   return { resolveString, resolveDeep, usedSecretValues: () => [...used] };
