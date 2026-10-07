@@ -1,3 +1,4 @@
+import rateLimit from "@fastify/rate-limit";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance } from "fastify";
 
@@ -10,6 +11,7 @@ function errorCode(status: number): string {
   if (status === 400) return "VALIDATION_FAILED";
   if (status === 401) return "UNAUTHORIZED";
   if (status === 413) return "PAYLOAD_TOO_LARGE";
+  if (status === 429) return "RATE_LIMITED";
   if (status >= 500) return "INTERNAL";
   return "REQUEST_FAILED";
 }
@@ -34,6 +36,13 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     },
     bodyLimit: deps.config.maxBodyBytes,
   }).withTypeProvider<TypeBoxTypeProvider>();
+
+  // Registered before the routes so one limiter guards every handler. Its 429
+  // is an Error with statusCode 429, so setErrorHandler shapes the body.
+  app.register(rateLimit, {
+    max: deps.config.rateLimitMax,
+    timeWindow: deps.config.rateLimitWindowMs,
+  });
 
   app.addHook("onRequest", async (request, reply) => {
     const path = request.url.split("?")[0];
@@ -62,8 +71,12 @@ export function buildApp(deps: AppDeps): FastifyInstance {
     });
   });
 
-  registerHealthRoutes(app, deps);
-  registerRunRoutes(app, deps);
+  // Routes load in a child context registered after the limiter, so the
+  // plugin's onRoute hook attaches the limiter to each handler.
+  app.register((instance) => {
+    registerHealthRoutes(instance, deps);
+    registerRunRoutes(instance, deps);
+  });
 
   return app;
 }

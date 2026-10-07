@@ -76,7 +76,7 @@ export function prepareRun(
       "url is required unless the first step is navigate",
     );
   }
-  const options = { ...(flow?.options ?? {}), ...(request.options ?? {}) };
+  const options = { ...flow?.options, ...request.options };
   return {
     steps,
     ...(url === undefined ? {} : { url }),

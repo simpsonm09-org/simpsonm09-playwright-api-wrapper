@@ -15,6 +15,8 @@ export interface Config {
   readonly maxBodyBytes: number;
   readonly maxConcurrentRuns: number;
   readonly maxOutputsBytes: number;
+  readonly rateLimitMax: number;
+  readonly rateLimitWindowMs: number;
   readonly chromiumArgs: string[];
 }
 
@@ -83,6 +85,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     maxBodyBytes: readInt(env, "MAX_BODY_BYTES", 262_144, 1024, 10_485_760),
     maxConcurrentRuns: readInt(env, "MAX_CONCURRENT_RUNS", 2, 1, 64),
     maxOutputsBytes: readInt(env, "MAX_OUTPUTS_BYTES", 65_536, 256, 10_485_760),
+    rateLimitMax: readInt(env, "RATE_LIMIT_MAX", 120, 1, 1_000_000),
+    rateLimitWindowMs: readInt(
+      env,
+      "RATE_LIMIT_WINDOW_MS",
+      60_000,
+      1_000,
+      3_600_000,
+    ),
     chromiumArgs: readList(env, "CHROMIUM_ARGS"),
   };
 }

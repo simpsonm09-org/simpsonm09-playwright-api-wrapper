@@ -119,7 +119,9 @@ discipline, and it keeps the runner testable without booting the server.
 
 Every route except the health checks requires `Authorization: Bearer <API_KEY>`,
 compared in constant time. A development default is allowed only when
-`NODE_ENV` is not `production`; startup logs a warning.
+`NODE_ENV` is not `production`; startup logs a warning. Every route is also
+guarded by a per-client rate limit, so an unauthenticated flood is throttled
+before the key check.
 
 ### Request
 
@@ -187,8 +189,9 @@ locators are preferred; `text` and `css` remain for sites without test ids.
 Status codes: `200` completed run (including failure and timeout), `400` invalid
 request or unresolved template, `401` bad key, `403` target not allowed, `409`
 failed run when `?failOnRunFailure=true`, `413` body too large, `429`
-concurrency limit, `502` unresolvable host. Fastify's own validation errors are
-normalized to the same `{ error: { code, message } }` shape by an error handler.
+concurrency or rate limit, `502` unresolvable host. Fastify's own validation
+errors are normalized to the same `{ error: { code, message } }` shape by an
+error handler.
 
 ### SSE
 
@@ -208,7 +211,7 @@ disconnect aborts the run and closes the context.
   blocked.
 - **Auth.** Constant-time bearer key on every non-health route.
 - **Limits.** Body size, step count, per-step timeout, per-run timeout,
-  concurrency, and output size.
+  concurrency, output size, and a per-client request rate.
 - **Isolation.** One fresh browser context per run, closed on every exit path.
 - **Logging.** pino redacts the authorization header and cookies. Resolved
   secret values are redacted from error messages.
