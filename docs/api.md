@@ -104,7 +104,7 @@ Resolved secret values are redacted from error messages and logs.
 - `403` target not permitted by the allowlist.
 - `409` a failed run when `?failOnRunFailure=true` is set.
 - `413` request body over the size cap.
-- `429` concurrency limit reached.
+- `429` concurrency limit reached, or the per-client request rate exceeded (`RATE_LIMITED`).
 - `502` target host could not be resolved.
 
 ## Streaming
@@ -113,4 +113,4 @@ With `Accept: text/event-stream`, the response emits one `step` event per step a
 
 ## Configuration
 
-See `.env.example`. Key variables: `API_KEY`, `ALLOWED_TARGETS`, `FLOWS_FILE`, `RUN_TIMEOUT_MS`, `STEP_TIMEOUT_MS`, `MAX_STEPS`, `MAX_BODY_BYTES`, `MAX_CONCURRENT_RUNS`, `MAX_OUTPUTS_BYTES`, `CHROMIUM_ARGS`, and `RUN_SECRET_*`.
+See `.env.example`. Key variables: `API_KEY`, `ALLOWED_TARGETS`, `FLOWS_FILE`, `RUN_TIMEOUT_MS`, `STEP_TIMEOUT_MS`, `MAX_STEPS`, `MAX_BODY_BYTES`, `MAX_CONCURRENT_RUNS`, `MAX_OUTPUTS_BYTES`, `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `CHROMIUM_ARGS`, and `RUN_SECRET_*`.
