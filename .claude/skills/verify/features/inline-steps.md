@@ -19,7 +19,7 @@ An inline run is the primary feature: a caller sends a target URL, a `vars` map,
 
 Preconditions: Launch is done and `/readyz` returned `200`.
 
-- **Every feature at once.** Run `node .opencode/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`.
+- **Every feature at once.** Run `node .claude/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`.
 - **Checkout scenario.** POST the checkout body (see the skill's Drive section) to `http://127.0.0.1:3010/v1/runs`. Status `200`, `status: "passed"`, every entry in `steps` `passed`, and `outputs.orderId` matches `^ord_`.
 - **Server-side state.** `curl -s http://127.0.0.1:4010/orders/<orderId>`. Status `200` with `email: "qa@example.test"` and `cardLast4: "4242"`.
 - **Reset first.** `curl -s -X POST http://127.0.0.1:4010/__reset` clears fixture state before a scenario that asserts on it.
