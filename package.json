@@ -32,7 +32,7 @@
     "playwright": "1.63.0"
   },
   "devDependencies": {
-    "@types/node": "^26.6.3",
+    "@types/node": "^26.6.4",
     "@vitest/coverage-v8": "^5.0.0",
     "newman": "^6.2.2",
     "tsx": "^4.23.15",
