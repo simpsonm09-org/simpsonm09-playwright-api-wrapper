@@ -5,7 +5,7 @@
  * Run from the repository root after `npm run build`:
  *
  *   npm run build
- *   node .opencode/skills/verify/scripts/launch.mjs
+ *   node .claude/skills/verify/scripts/launch.mjs
  *
  * Both servers run as plain `node dist/...` processes, detached, with their PIDs
  * recorded in artifacts/verify/.state.json so cleanup stops exactly what this

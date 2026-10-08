@@ -4,7 +4,7 @@
  *
  * Start the service with launch.mjs first, then run from the repository root:
  *
- *   node .opencode/skills/verify/scripts/drive.mjs \
+ *   node .claude/skills/verify/scripts/drive.mjs \
  *     --base-url http://127.0.0.1:3010 \
  *     --fixture-url http://127.0.0.1:4010 \
  *     --out artifacts/verify
