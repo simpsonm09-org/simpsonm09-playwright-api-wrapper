@@ -13,7 +13,7 @@ Run from the repository root. Build first, then start both processes with the la
 
 ```bash
 npm run build
-node .opencode/skills/verify/scripts/launch.mjs
+node .claude/skills/verify/scripts/launch.mjs
 ```
 
 The launcher spawns `node dist/fixture/server.js` and `node dist/src/server.js` detached, points `ALLOWED_TARGETS` at `http://127.0.0.1:4010`, loads `flows/flows.json`, and records the PIDs in `artifacts/verify/.state.json`. Explicit environment values win over the repo's `.env`. It prints the state once both `/healthz` endpoints answer:
@@ -46,7 +46,7 @@ curl -s -w '\n%{http_code}\n' http://127.0.0.1:3010/readyz
 Run the shipped helper against the running instance:
 
 ```bash
-node .opencode/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify
+node .claude/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify
 ```
 
 The helper resets the fixture, then exercises the inline-steps run, the named flow, the SSE stream, the `failOnRunFailure` status, and the allowlist rejection. It writes one evidence file per feature and exits non-zero when any expectation is wrong (`verify: pass` / `verify: FAIL`).
@@ -77,7 +77,7 @@ Proof artifacts go to `artifacts/verify/<feature>/` and survive teardown. `artif
 Stop the processes started in Launch and leave `artifacts/verify/` in place:
 
 ```bash
-node .opencode/skills/verify/scripts/cleanup.mjs
+node .claude/skills/verify/scripts/cleanup.mjs
 ```
 
 It kills only the PIDs recorded in `artifacts/verify/.state.json` and removes that scratch file; the response bodies, stream capture, logs, and summary stay. Cleanup removes the instance, never the proof.

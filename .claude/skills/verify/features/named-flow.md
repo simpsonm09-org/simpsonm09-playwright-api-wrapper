@@ -18,7 +18,7 @@ A named flow lets a caller send `flow: "name"` instead of an inline `steps` arra
 
 Preconditions: Launch is done, `/readyz` returned `200`, and `FLOWS_FILE=flows/flows.json` resolves from the repo root.
 
-- **Every feature at once.** Run `node .opencode/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`.
+- **Every feature at once.** Run `node .claude/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`.
 - **Basic form.** POST the body above. Status `200`, `status: "passed"`, `outputs.submissionId` matches `^sub_`, and `outputs.nameValue` is `"Ada Lovelace"`.
 - **Server-side state.** `curl -s http://127.0.0.1:4010/submissions/<submissionId>`. Status `200` with `plan: "pro"` and the submitted fields.
 - **Proof.** Keep `artifacts/verify/named-flow/response.json` and `artifacts/verify/named-flow/fixture-submission.json`.

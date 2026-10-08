@@ -18,7 +18,7 @@ A run that fails still returns HTTP `200` with `status: "failed"` (or `"timedOut
 
 Preconditions: Launch is done, `/readyz` returned `200`.
 
-- **Every feature at once.** Run `node .opencode/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`; it drives both the flagged and unflagged calls.
+- **Every feature at once.** Run `node .claude/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`; it drives both the flagged and unflagged calls.
 - **Flagged.** POST `{"url":"http://127.0.0.1:4010/checkout","options":{"stepTimeoutMs":1000},"steps":[{"action":"assertText","target":{"by":"text","text":"No such element"},"contains":"nope"}]}` to `http://127.0.0.1:3010/v1/runs?failOnRunFailure=true`. Status `409`, `status: "failed"`, `error.code: "ASSERTION_FAILED"`.
 - **Unflagged control.** POST the same body without the query. Status `200` with the same `status: "failed"`.
 - **Proof.** Keep `artifacts/verify/failure-status/response.json` and `artifacts/verify/failure-status/control.json`.

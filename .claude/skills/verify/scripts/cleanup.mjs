@@ -2,7 +2,7 @@
 /**
  * Stop the API and fixture started by launch.mjs.
  *
- *   node .opencode/skills/verify/scripts/cleanup.mjs
+ *   node .claude/skills/verify/scripts/cleanup.mjs
  *
  * Kills only the PIDs recorded in artifacts/verify/.state.json, never by port or
  * process name, so a developer's own instance is untouched. Evidence under

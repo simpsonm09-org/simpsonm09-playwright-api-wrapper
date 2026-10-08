@@ -18,7 +18,7 @@ Every navigation target is checked against `ALLOWED_TARGETS` before a browser co
 
 Preconditions: Launch is done and the service was started with `ALLOWED_TARGETS=http://127.0.0.1:4010`.
 
-- **Every feature at once.** Run `node .opencode/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`.
+- **Every feature at once.** Run `node .claude/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`.
 - **By hand.** `curl -s -o - -w '\n%{http_code}\n' http://127.0.0.1:3010/v1/runs -H "Authorization: Bearer $API_KEY" -H 'Content-Type: application/json' -d '{"url":"http://169.254.169.254/","steps":[{"action":"navigate","url":"http://169.254.169.254/"}]}'`. Status `403` and body `{"error":{"code":"TARGET_NOT_ALLOWED","message":"..."}}`.
 - **Proof.** Keep `artifacts/verify/allowlist-rejection/response.json`.
 

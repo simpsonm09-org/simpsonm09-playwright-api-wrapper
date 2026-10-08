@@ -18,7 +18,7 @@ With `Accept: text/event-stream`, `POST /v1/runs` returns a live Server-Sent Eve
 
 Preconditions: Launch is done, `/readyz` returned `200`.
 
-- **Every feature at once.** Run `node .opencode/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`; it writes the raw bytes to `artifacts/verify/sse-stream/stream.txt` and a `meta.json` with event counts.
+- **Every feature at once.** Run `node .claude/skills/verify/scripts/drive.mjs --base-url http://127.0.0.1:3010 --fixture-url http://127.0.0.1:4010 --out artifacts/verify`; it writes the raw bytes to `artifacts/verify/sse-stream/stream.txt` and a `meta.json` with event counts.
 - **By hand.** `curl -N -s http://127.0.0.1:3010/v1/runs -H "Authorization: Bearer $API_KEY" -H 'Content-Type: application/json' -H 'Accept: text/event-stream' -d '<checkout body>'`.
 - **Assert.** The stream contains `event: step` lines, one `event: result`, and `"status":"passed"` inside that result event.
 - **Proof.** Keep `artifacts/verify/sse-stream/stream.txt` and `artifacts/verify/sse-stream/meta.json`.
