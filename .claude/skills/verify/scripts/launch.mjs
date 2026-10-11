@@ -65,6 +65,7 @@ function start(entry, env, logName) {
     env: { ...process.env, ...env },
     detached: true,
     stdio: ["ignore", fd, fd],
+    windowsHide: true,
   });
   child.unref();
   return child.pid;

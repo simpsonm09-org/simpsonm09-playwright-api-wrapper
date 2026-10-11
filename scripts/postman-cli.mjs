@@ -26,7 +26,7 @@ const result = spawnSync(
     `apiKey=${apiKey}`,
     '--report-events=false',
   ],
-  { stdio: 'inherit', shell: true },
+  { stdio: 'inherit', shell: true, windowsHide: true },
 );
 
 if (result.error !== undefined) {
