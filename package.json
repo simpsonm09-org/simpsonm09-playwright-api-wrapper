@@ -25,16 +25,16 @@
     "verify": "npm run typecheck && npm run test"
   },
   "dependencies": {
-    "@fastify/rate-limit": "^11.2.0",
-    "@fastify/type-provider-typebox": "^6.1.0",
+    "@fastify/rate-limit": "^11.2.1",
+    "@fastify/type-provider-typebox": "^6.2.0",
     "@sinclair/typebox": "^0.34.52",
     "fastify": "^5.12.5",
-    "playwright": "1.63.0"
+    "playwright": "1.64.0"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
+    "@types/node": "^26.6.5",
     "@vitest/coverage-v8": "^5.0.0",
-    "newman": "^6.2.2",
+    "newman": "^6.2.3",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.2"
