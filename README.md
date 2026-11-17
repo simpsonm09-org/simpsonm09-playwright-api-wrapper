@@ -2,7 +2,10 @@
 
 A small HTTP API that runs one Playwright browser scenario per request. A caller sends a target URL and a declarative step script, and the API returns a structured result. Postman, newman, and GitHub Actions are the intended callers.
 
-The original lives in `simpsonm09-org/simpsonm09-playwright-api-wrapper`; work happens on the personal fork. See [`repo-standard`](https://github.com/simpsonm09-org/simpsonm09-repo-standard).
+This repository lives in `simpsonm09-projects/simpsonm09-playwright-api-wrapper`. Work happens on a branch
+with a pull request into `main`.
+See [`repo-standard`](https://github.com/simpsonm09-projects/simpsonm09-repo-standard)
+for the branch model and the protection rules.
 
 ## What it does
 
@@ -36,4 +39,4 @@ MIT. See [`LICENSE`](LICENSE).
 
 ## Related repositories
 
-- [`repo-standard`](https://github.com/simpsonm09-org/simpsonm09-repo-standard) owns the shared CI, linting, security, and governance.
+- [`repo-standard`](https://github.com/simpsonm09-projects/simpsonm09-repo-standard) owns the shared CI, linting, security, and governance.
