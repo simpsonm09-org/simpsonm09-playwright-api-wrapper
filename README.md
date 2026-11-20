@@ -4,7 +4,7 @@ A small HTTP API that runs one Playwright browser scenario per request. A caller
 
 This repository lives in `simpsonm09-projects/playwright-api-wrapper`. Work happens on a branch
 with a pull request into `main`.
-See [`repo-standard`](https://github.com/simpsonm09-projects/simpsonm09-repo-standard)
+See [`repo-standard`](https://github.com/simpsonm09-projects/repo-standard)
 for the branch model and the protection rules.
 
 ## What it does
@@ -39,4 +39,4 @@ MIT. See [`LICENSE`](LICENSE).
 
 ## Related repositories
 
-- [`repo-standard`](https://github.com/simpsonm09-projects/simpsonm09-repo-standard) owns the shared CI, linting, security, and governance.
+- [`repo-standard`](https://github.com/simpsonm09-projects/repo-standard) owns the shared CI, linting, security, and governance.
