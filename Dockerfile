@@ -21,7 +21,7 @@ RUN npm run build && npm prune --omit=dev
 # One image carries both the API and the tiny test fixture. Compose and CI start
 # the fixture with a command override, and it is never exposed in production.
 FROM base AS runtime
-LABEL org.opencontainers.image.source="https://github.com/simpsonm09-projects/simpsonm09-playwright-api-wrapper" \
+LABEL org.opencontainers.image.source="https://github.com/simpsonm09-projects/playwright-api-wrapper" \
       org.opencontainers.image.description="Lightweight HTTP API that runs one Playwright scenario per request." \
       org.opencontainers.image.licenses="MIT"
 COPY --from=build /app/node_modules ./node_modules
